@@ -1,7 +1,13 @@
 package com.app.pakeplus
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -11,29 +17,27 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.enableEdgeToEdge
-// import android.view.Menu
-// import android.view.WindowInsets
-// import com.google.android.material.snackbar.Snackbar
-// import com.google.android.material.navigation.NavigationView
-// import androidx.navigation.findNavController
-// import androidx.navigation.ui.AppBarConfiguration
-// import androidx.navigation.ui.navigateUp
-// import androidx.navigation.ui.setupActionBarWithNavController
-// import androidx.navigation.ui.setupWithNavController
-// import androidx.drawerlayout.widget.DrawerLayout
-// import com.app.pakeplus.databinding.ActivityMainBinding
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
 
-//    private lateinit var appBarConfiguration: AppBarConfiguration
-//    private lateinit var binding: ActivityMainBinding
-
     private lateinit var webView: WebView
     private lateinit var gestureDetector: GestureDetectorCompat
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1
+    private val locationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "LOCATION_UPDATE") {
+                val latitude = intent.getDoubleExtra("latitude", 0.0)
+                val longitude = intent.getDoubleExtra("longitude", 0.0)
+                sendLocationToWebView(latitude, longitude)
+            }
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,13 +61,12 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true       // 启用DOM存储（Vue 需要）
             allowFileAccess = true         // 允许文件访问
             setSupportMultipleWindows(true)
+            setGeolocationEnabled(true)
+            setGeolocationDatabasePath(filesDir.path)
         }
-
-        // webView.settings.userAgentString = ""
 
         webView.settings.loadWithOverviewMode = true
         webView.settings.setSupportZoom(false)
-
 
         // clear cache
         webView.clearCache(true)
@@ -116,34 +119,67 @@ class MainActivity : AppCompatActivity() {
             false
         }
 
-        webView.loadUrl("https://juejin.cn/")
-
-//        binding = ActivityMainBinding.inflate(layoutInflater)
-//        setContentView(R.layout.single_main)
-
-//        setSupportActionBar(binding.appBarMain.toolbar)
-
-//        binding.appBarMain.fab.setOnClickListener { view ->
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null)
-//                .setAnchorView(R.id.fab).show()
-//        }
-
-//        val drawerLayout: DrawerLayout = binding.drawerLayout
-//        val navView: NavigationView = binding.navView
-//        val navController = findNavController(R.id.nav_host_fragment_content_main)
-
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-//        appBarConfiguration = AppBarConfiguration(
-//            setOf(
-//                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
-//            ), drawerLayout
-//        )
-//        setupActionBarWithNavController(navController, appBarConfiguration)
-//        navView.setupWithNavController(navController)
+        requestLocationPermissions()
+        startLocationService()
+        webView.loadUrl("file:///android_asset/index.html")
     }
 
+    private fun requestLocationPermissions() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED ||
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            } else {
+                false
+            }
+        ) {
+            val permissions = mutableListOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permissions.add(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            }
+            ActivityCompat.requestPermissions(
+                this,
+                permissions.toTypedArray(),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+
+    private fun startLocationService() {
+        val serviceIntent = Intent(this, LocationService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                // 权限已授予
+            } else {
+                // 权限被拒绝
+            }
+        }
+    }
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
@@ -154,21 +190,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        menuInflater.inflate(R.menu.main, menu)
-//        return true
-//    }
-
-//    override fun onSupportNavigateUp(): Boolean {
-//        val navController = findNavController(R.id.nav_host_fragment_content_main)
-//        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-//    }
-
     inner class MyWebViewClient : WebViewClient() {
 
         // vConsole debug
-        private var debug = false
+        private var debug = true
 
         @Deprecated("Deprecated in Java", ReplaceWith("false"))
         override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
@@ -212,5 +237,27 @@ class MainActivity : AppCompatActivity() {
             val url = view?.url
             println("wev view url:$url")
         }
+
+        override fun onGeolocationPermissionsShowPrompt(
+            origin: String?,
+            callback: android.webkit.GeolocationPermissions.Callback?
+        ) {
+            callback?.invoke(origin, true, false)
+        }
+    }
+
+    fun sendLocationToWebView(latitude: Double, longitude: Double) {
+        val js = "javascript:updateLocation($latitude, $longitude)"
+        webView.evaluateJavascript(js, null)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"))
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(locationReceiver)
     }
 }

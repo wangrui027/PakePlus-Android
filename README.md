@@ -44,7 +44,6 @@ https://github.com/user-attachments/assets/b88bf541-0b26-4020-9eec-da79e1734fc9
 -   Annoyed by website ads? Hide them with powerful JS.
 -   Want to use Tauri2 but the environment is too heavy? Use PakePlus instead!
 
-
 ## Popular Packages
 
 <img src=https://sjj1024.github.io/PakePlus/static/imgs/preview.webp  width=1920/>
@@ -165,17 +164,17 @@ pnpm run build
 
 ## Support
 
-1. wechat and group
+1. wechat and group，my wechat is lanxingme，welcome to join the wechat group.
  <p align="center" style="display:flex; justify-content: flex-start;" >
-    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/mywx.png" width=300/>
-    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/wxcode.png" width=300/>
+    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/mywx.png" width=200/>
+    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/wxcode.png" width=200/>
+    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/qq.jpg" width=200/>
  </p>
 
 2. 💖If PakePlus has brought joy to your life, feel free to support it.
  <p align="center" style="display:flex; justify-content: flex-start;">
-    <img src="https://files.pakeplus.com/sponsor.webp" width=620/>
+    <img src="https://github.com/Sjj1024/PakePlus/raw/main/docs/static/imgs/sponsor.webp" width=620/>
  </p>
-
 
 ## Star History
 

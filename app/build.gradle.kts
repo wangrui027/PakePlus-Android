@@ -50,4 +50,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // 添加 Google Play 服务定位库依赖
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }
